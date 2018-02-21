@@ -12,10 +12,12 @@
 
 @synthesize bridge = _bridge;
 
+
 RCT_EXPORT_MODULE();
 
 - (id) init {
   self = [super init];
+  currentDeviceOrientation = @"PORTRAIT";
   NSLog(@"Accelerometer");
 
   if (self) {
@@ -38,6 +40,19 @@ RCT_EXPORT_MODULE();
     }
   }
   return self;
+}
+
+- (NSString *)calculateDeviceOrientation: (double)x andY: (double)y andZ: (double)z{
+  if (x >= 0.75) {
+    return @"LANDSCAPE_LEFT";
+  } else if (x <= -0.75) {
+    return @"LANDSCAPE_RIGHT";
+  } else if (y <= -0.75) {
+    return @"PORTRAIT";
+  } else if (y >= 0.75) {
+    return @"PORTRAIT_REVERSE";
+  }
+  return currentDeviceOrientation;
 }
 
 RCT_EXPORT_METHOD(setAccelerometerUpdateInterval:(double) interval) {
@@ -79,20 +94,15 @@ RCT_EXPORT_METHOD(startAccelerometerUpdates) {
   [self->_motionManager startAccelerometerUpdatesToQueue:[NSOperationQueue mainQueue]
                                     withHandler:^(CMAccelerometerData *accelerometerData, NSError *error)
    {
-     double x = accelerometerData.acceleration.x;
-     double y = accelerometerData.acceleration.y;
-     double z = accelerometerData.acceleration.z;
-     double timestamp = accelerometerData.timestamp;
-     NSLog(@"startAccelerometerUpdates: %f, %f, %f, %f", x, y, z, timestamp);
-
-     [self.bridge.eventDispatcher sendDeviceEventWithName:@"AccelerationData" body:@{
-                                                                             @"acceleration": @{
-                                                                                 @"x" : [NSNumber numberWithDouble:x],
-                                                                                 @"y" : [NSNumber numberWithDouble:y],
-                                                                                 @"z" : [NSNumber numberWithDouble:z],
-                                                                                 @"timestamp" : [NSNumber numberWithDouble:timestamp]
-                                                                                 }
-                                                                             }];
+    double x = accelerometerData.acceleration.x;
+    double y = accelerometerData.acceleration.y;
+    double z = accelerometerData.acceleration.z;
+    double timestamp = accelerometerData.timestamp;
+    NSLog(@"startAccelerometerUpdates: %f, %f, %f, %f", x, y, z, timestamp);
+    
+    currentDeviceOrientation = [self calculateDeviceOrientation: x andY: y andZ: z];
+    
+    [self.bridge.eventDispatcher sendDeviceEventWithName:@"AccelerationData" body: currentDeviceOrientation];
    }];
 
 }
