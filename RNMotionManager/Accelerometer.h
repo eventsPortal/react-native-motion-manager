@@ -9,6 +9,7 @@
 
 @interface Accelerometer : NSObject <RCTBridgeModule> {
   CMMotionManager *_motionManager;
+  NSString *currentDeviceOrientation;
 }
 - (void) setAccelerometerUpdateInterval:(double) interval;
 - (void) getAccelerometerUpdateInterval:(RCTResponseSenderBlock) cb;
